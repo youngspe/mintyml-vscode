@@ -1,0 +1,48 @@
+{
+  "name": "mintyml",
+  "displayName": "MinTyML",
+  "description": "MinTyML syntax highlighting",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node ./scripts/build.js"
+  },
+  "engines": {
+    "vscode": "^1.87.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mintyml",
+        "aliases": [
+          "MinTyML",
+          "mintyml"
+        ],
+        "extensions": [
+          ".minty",
+          ".mty",
+          ".mintyml"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[mintyml]": {
+        "editor.tabSize": 2,
+        "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?_"
+      }
+    },
+    "grammars": [
+      {
+        "language": "mintyml",
+        "scopeName": "text.html.mintyml",
+        "path": "./syntaxes/mintyml.tmLanguage.json"
+      }
+    ]
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

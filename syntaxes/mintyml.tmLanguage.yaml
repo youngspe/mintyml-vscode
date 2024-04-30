@@ -1,0 +1,611 @@
+$schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
+name: MinTyML
+variables:
+  simpleEscape: |-
+    \\(?:u\{.*?\}|.)
+
+  classChar: |-
+    (?:[^\s!@\#\$%\^&\*\())\`\~/\,\.\;\|\"\'<>{}\[\]\\]|{{ simpleEscape }})
+
+  inlineDelimiterOpen: |-
+    (?:[!@\#\$%\^&\*(\`\~/\,\.\;\|\"\'_]|\[\[)
+  inlineDelimiterClose: |-
+    (?:[!@\#\$%\^&\*)\`\~/\,\.\;\|\"\'_]|\]\])
+
+  beforeElement: |
+    (?<=
+      (?:
+        ^ | [{>] | < {{ inlineDelimiterOpen }}
+      ) \s*
+    )
+  beforeSelector: |
+    (?: {{ beforeElement }} | (?<= [\]\*] | {{ classChar }} ) )
+
+  selector: |-
+    (?:
+      (?= [[a-z][A-Z].\#*])
+      (?:
+        {{ classChar }} | [\.\#\*]
+      )+
+      (?<! [\.\#*_])
+    )
+
+  endParagraph: |-
+    (?=$|{{ inlineDelimiterClose }}>|\})
+
+  preSpecialTag: |-
+    (?xi)
+    \b
+  postSpecialTag: |-
+    \b (?= {{ selector }}* (?: \[ | \s* [>\{] ) )
+
+patterns:
+  - include: "#node"
+repository:
+  node:
+    name: meta.node.mintyml
+    patterns:
+      - include: "#interpolate"
+      - include: "#element"
+      - include: "#paragraph"
+
+  escape:
+    name: constant.character.escape.mintyml
+    match: |-
+      (?x)
+      #1
+      (\\)
+      (?:
+        #2 #3   #4    #5
+        (u (\{) (.*?) (\}) )
+          #6 #7
+        | (x ( [ a-z A-Z 0-9 ]{2} ) )
+        | [ {} <> \\ "'` \[\] \ ]
+        | [nrt]
+          #8
+        | (.)
+      )
+    captures:
+      1: { name: constant.character.escape.backslash.mintyml }
+      2: { name: constant.character.escape.unicode.mintyml }
+      3: { name: punctuation.definition.interpolation.mintyml }
+      4:
+        patterns:
+          - name: constant.numeric.integer.hexadecimal.mintyml
+            match: "[a-fA-F0-9]+"
+          - name: invalid.illegal
+            match: ".+"
+      5: { name: punctuation.definition.interpolation.mintyml }
+      6: { name: constant.character.escape.ascii.mintyml }
+      7:
+        patterns:
+          - name: constant.numeric.integer.hexadecimal.mintyml
+            match: "[0-7][a-fA-F0-9]"
+          - name: invalid.illegal
+            match: ".+"
+      8: { name: invalid.illegal }
+
+  <<:
+    - element:
+        patterns:
+          - include: "#rawBlock"
+          - include: "#line"
+          - include: "#block"
+          - include: "#specialTag"
+          - include: "#selector"
+      line:
+        begin: |-
+          (?x)
+          (?<! \\ | {{ inlineDelimiterClose }} ) >
+        end: "{{ endParagraph }}"
+        patterns:
+          - include: "#node"
+        beginCaptures:
+          0: { name: keyword.operator.combinator.mintyml }
+        name: meta.line.mintyml
+        contentName: text.line.mintyml
+      block:
+        name: meta.block.mintyml
+        begin: "{"
+        end: "}"
+        contentName: text.block.mintyml
+        beginCaptures:
+          0:
+            name: punctuation.section.block.begin
+        endCaptures:
+          0:
+            name: punctuation.section.block.end
+        patterns:
+          - include: "#element"
+          - include: "#paragraph"
+      <<:
+        - specialTag:
+            patterns:
+              - include: "#anchor"
+              - include: "#heading"
+          anchor:
+            name: markup.underline.link
+            begin: |
+              {{ preSpecialTag }} a {{ postSpecialTag }}
+            beginCaptures:
+              0: { name: entity.name.tag.a.html.mintyml }
+            <<: &specialTagMixin
+              end: "{{ endParagraph }}"
+              patterns:
+                - include: "#element"
+          <<:
+            - heading:
+                patterns:
+                  - include: "#heading1"
+                  - include: "#heading2"
+                  - include: "#heading3"
+                  - include: "#heading4"
+                  - include: "#heading5"
+                  - include: "#heading6"
+              heading1:
+                name: markup.heading.1.html.mintyml
+                begin: |
+                  {{ preSpecialTag }} h1 {{ postSpecialTag }}
+                beginCaptures:
+                  0: { name: entity.name.tag.h1.html.mintyml }
+                <<: *specialTagMixin
+              heading2:
+                name: markup.heading.2.html.mintyml
+                begin: |
+                  {{ preSpecialTag }} h2 {{ postSpecialTag }}
+                beginCaptures:
+                  0: { name: entity.name.tag.h2.html.mintyml }
+                <<: *specialTagMixin
+              heading3:
+                name: markup.heading.3.html.mintyml
+                begin: |
+                  {{ preSpecialTag }} h3 {{ postSpecialTag }}
+                beginCaptures:
+                  0: { name: entity.name.tag.h3.html.mintyml }
+                <<: *specialTagMixin
+              heading4:
+                name: markup.heading.4.html.mintyml
+                begin: |
+                  {{ preSpecialTag }} h4 {{ postSpecialTag }}
+                beginCaptures:
+                  0: { name: entity.name.tag.h4.html.mintyml }
+                <<: *specialTagMixin
+              heading5:
+                name: markup.heading.5.html.mintyml
+                begin: |
+                  {{ preSpecialTag }} h5 {{ postSpecialTag }}
+                beginCaptures:
+                  0: { name: entity.name.tag.h5.html.mintyml }
+                <<: *specialTagMixin
+              heading6:
+                name: markup.heading.6.html.mintyml
+                begin: |
+                  {{ preSpecialTag }} h6 {{ postSpecialTag }}
+                beginCaptures:
+                  0: { name: entity.name.tag.h6.html.mintyml }
+                <<: *specialTagMixin
+            #/heading
+        #/specialTag
+
+        - selector:
+            name: meta.selector.mintyml
+            begin: |
+              (?x)
+              (?=
+                {{ beforeSelector }}
+                (?:
+                  {{ selector }} (?: \[ | \s* [>{] )
+                  | \[
+                )
+              )
+            end: |-
+              (?=$|[\s<>{}\]])
+            patterns:
+              - include: "#attributeList"
+              - include: "#wildcardSelector"
+              - include: "#classSelector"
+              - include: "#tagSelector"
+              - include: "#idSelector"
+
+          wildcardSelector:
+            match: '\*'
+            name: entity.name.tag.wildcard.mintyml
+          tagSelector:
+            match: |-
+              (?:([\w:-]+)(:))?([\w:-]+)
+            captures:
+              1: { name: entity.name.tag.namespace.mintyml }
+              2: { name: punctuation.separator.namespace.mintyml }
+              3: { name: entity.name.tag.localName.mintyml }
+            name: entity.name.tag.mintyml
+          classSelector:
+            name: entity.other.attribute-name.class.mintyml
+            match: |-
+              (\.){{ classChar }}+
+            captures:
+              1: { name: punctuation.definition.entity.mintyml }
+          idSelector:
+            name: entity.other.attribute-name.id.mintyml
+            match: |-
+              (\#)({{ classChar }}+)
+            captures:
+              1: { name: punctuation.definition.entity.mintyml }
+        #/selectorList
+
+        - attributeList:
+            name: meta.attribute-selector
+            begin: '\['
+            end: '\]'
+            beginCaptures:
+              0: { name: punctuation.section.brackets.start }
+
+            endCaptures:
+              0: { name: punctuation.section.brackets.end }
+            patterns:
+              - include: "#attribute"
+          attribute:
+            name: meta.attribute.mintyml
+            patterns:
+              - match: |
+                  (?x)
+                  #1      #2    #3
+                  ([\w-]+ (:))? ([\w:-]+)
+                      #4
+                  (?: \s* (=) (?:
+                    \s*
+                    #5
+                    ( (?: [^\s"'=\\\[\]] | {{ simpleEscape }} )+ )
+                      #6
+                    | ( "(?: [^\\"] | {{ simpleEscape }} )+" )
+                      #7
+                    | ( '(?: [^\\'] | {{ simpleEscape }} )+' )
+                  ))?
+
+                captures:
+                  1: { name: entity.other.attribute-name.namespace.mintyml }
+                  2: { name: punctuation.separator.namespace.mintyml }
+                  3: { name: entity.other.attribute-name.localName.mintyml }
+                  4: { name: punctuation.separator.key-value.mintyml }
+                  5:
+                    name: string.unquoted.mintyml
+                    patterns:
+                      - include: "#escape"
+                  6:
+                    name: string.quoted.double.mintyml
+                    patterns:
+                      - include: "#escape"
+                  7:
+                    name: string.quoted.single.mintyml
+                    patterns:
+                      - include: "#escape"
+        #/attributeList
+    #/element
+
+    - paragraph:
+        name: meta.paragraph.mintyml
+        begin: |-
+          (?x)
+          (?=
+            {{ simpleEscape }}
+            | <
+            | (?: [^ \\ \[ > { \s] | {{ simpleEscape }} )+?
+            (?: $ | {{ inlineDelimiterClose }} > | [^\\][\s\}<] )
+          )
+
+        end: "{{ endParagraph }}"
+
+        patterns:
+          - include: "#escape"
+          - include: "#inline"
+          - name: invalid.illegal.mintyml
+            match: |-
+              (?x)
+              [\[\]<>{}]
+              | \{ [^\}\s]
+      <<:
+        - inline:
+            patterns:
+              - include: "#inlineElement"
+              - include: "#inlineStrong"
+              - include: "#inlineEmphasis"
+              - include: "#inlineStrike"
+              - include: "#inlineQuote"
+              - include: "#inlineUnderline"
+              - include: "#inlineComment"
+              - include: "#inlineRaw"
+
+          <<:
+            - inlineElement:
+                begin: '<\('
+                end: '\)>'
+                <<: &inlineMixin
+                  name: meta.inline.mintyml
+                  contentName: text.inline.mintyml
+                  patterns:
+                    - include: "#node"
+                  <<: &genericBraceCaptures
+                    beginCaptures:
+                      0: { name: punctuation.definition.generic.begin }
+                    endCaptures:
+                      0: { name: punctuation.definition.generic.end }
+
+              inlineStrong:
+                begin: "<#"
+                end: "#>"
+                <<: *inlineMixin
+                contentName: markup.bold
+
+              inlineEmphasis:
+                begin: "</"
+                end: "/>"
+                <<: *inlineMixin
+                contentName: markup.italic
+
+              inlineStrike:
+                begin: "<~"
+                end: "~>"
+                <<: *inlineMixin
+                contentName: markup.strikethrough
+
+              inlineQuote:
+                begin: '<"'
+                end: '">'
+                <<: *inlineMixin
+                contentName: markup.quote
+
+              inlineUnderline:
+                begin: "<_"
+                end: "_>"
+                <<: *inlineMixin
+                contentName: markup.underline
+            #/inlineElement
+            - inlineRaw:
+                name: meta.raw
+                patterns:
+                  - include: "#inlineCode"
+                  - include: "#inlineRaw0"
+                  - include: "#inlineRaw1"
+                  - include: "#inlineRaw2"
+              inlineCode:
+                begin: "<`"
+                end: "`>"
+                <<: &inlineRawMixin
+                  contentName: string.other.raw.mintyml
+                  <<: *genericBraceCaptures
+                contentName: markup.inline.raw.mintyml
+              inlineRaw0:
+                begin: '<\[(?:raw)?\['
+                end: '\]\]>'
+                <<: *inlineRawMixin
+              inlineRaw1:
+                begin: '<\[(?:raw)?#\['
+                end: '\]#\]>'
+                <<: *inlineRawMixin
+              inlineRaw2:
+                begin: '<\[(?:raw)?##\['
+                end: '\]##\]>'
+                <<: *inlineRawMixin
+            #/inlineRaw
+            - inlineComment:
+                begin: "<!"
+                end: "!>"
+                name: meta.comment.block.mintyml
+                contentName: comment.block.mintyml
+                beginCaptures:
+                  0: { name: punctuation.definition.comment.begin }
+                endCaptures:
+                  0: { name: punctuation.definition.comment.end }
+            #/inlineComment
+        #/inline
+    #/paragraph
+
+    - rawBlock:
+        patterns:
+          - include: "#rawBlockSingle"
+          - include: "#rawBlockDouble"
+          - include: "#codeBlock"
+
+      rawBlockSingle: &rawBlock
+        begin: |
+          (?xm)
+          (?= {{ beforeElement }} )
+          (''')(?!')(.*?)$
+
+        end: |
+          (?xm)
+          (''')\s*$
+        name: meta.string
+        contentName: string.quoted.triple
+        beginCaptures:
+          1: { name: punctuation.definition.string.begin }
+          2:
+            patterns:
+              - include: "#attribute"
+        endCaptures:
+          1: { name: punctuation.definition.string.end }
+
+      rawBlockDouble:
+        <<: *rawBlock
+        begin: |
+          (?xm)
+          (?= {{ beforeElement }} )
+          (""")(?!")(.*?)$
+
+        end: |
+          (?xm)
+          (""")\s*$
+        patterns:
+          - include: "#escape"
+
+      codeBlock:
+        begin: |
+          (?xm)
+          (?= {{ beforeElement }} )
+          (```)(?!`)(.*?)$
+
+        end: |
+          (?xm)
+          (```)\s*$
+        name: meta.raw
+        contentName: markup.raw
+        beginCaptures:
+          1: { name: punctuation.definition.raw.begin }
+          2:
+            patterns:
+              - include: "#attribute"
+        endCaptures:
+          1: { name: punctuation.definition.raw.end }
+    #/rawBlock
+
+    - interpolate:
+        name: meta.interpolation
+        patterns:
+          - include: "#angleModInterpolate"
+          - include: "#angleQmarkInterpolate"
+          - include: "#braceModInterpolate"
+          - include: "#doubleBraceInterpolate"
+
+      angleModInterpolate:
+        match: |-
+          (<%)(.*?)(%>)
+        <<: &interpolateMixin
+          name: meta.interpolation
+          captures:
+            1: { name: punctuation.section.interpolation.begin.mintyml }
+            2: { patterns: [include: "#genericCode"] }
+            3: { name: punctuation.section.interpolation.end.mintyml }
+
+      angleQmarkInterpolate:
+        match: |-
+          (<\?)(.*?)(\?>)
+        <<: *interpolateMixin
+
+      braceModInterpolate:
+        match: |-
+          (\{%)(.*?)(%\})
+        <<: *interpolateMixin
+
+      doubleBraceInterpolate:
+        match: |-
+          (\{\{)(.*?)(\}\})
+        <<: *interpolateMixin
+    #/interpolate
+
+    - genericCode:
+        patterns:
+          - include: "#genericBlock"
+          - include: "#genericList"
+          - include: "#genericCall"
+          - include: "#genericGroup"
+          - include: "#genericFloat"
+          - include: "#genericInt"
+          - include: "#genericString"
+          - include: "#genericOperator"
+          - include: "#escape"
+          - include: "#genericKeyword"
+      genericBlock:
+        name: meta.braces
+        begin: '\{'
+        end: '\}'
+        beginCaptures:
+          0: { name: punctuation.section.braces.begin }
+        endCaptures:
+          0: { name: punctuation.section.braces.end }
+        patterns:
+          - include: "#genericCode"
+      genericList:
+        name: meta.brackets
+        begin: '\['
+        end: '\]'
+        beginCaptures:
+          0: { name: punctuation.section.brackets.begin }
+        endCaptures:
+          0: { name: punctuation.section.brackets.end }
+        patterns:
+          - include: "#genericCode"
+      genericCall:
+        name: meta.function-call
+        begin: '(\w+)(\()'
+        end: '\)'
+        beginCaptures:
+          1: { name: variable.function }
+          2: { name: punctuation.section.parens.begin }
+        endCaptures:
+          0: { name: punctuation.section.parens.end }
+        contentName: meta.parens
+        patterns:
+          - include: "#genericCode"
+      genericGroup:
+        name: meta.parens
+        begin: '\('
+        end: '\)'
+        beginCaptures:
+          0: { name: punctuation.section.parens.begin }
+        endCaptures:
+          0: { name: punctuation.section.parens.end }
+        patterns:
+          - include: "#genericCode"
+      genericOperator:
+        patterns:
+          - name: keyword.operator.accessor
+            match: '\.|::|->'
+          - name: keyword.operator.other
+            match: '[!@\#\$%\^&\*\-=\+/\?<>~\|]+'
+          - name: punctuation.separator
+            match: "[,:]"
+          - name: punctuation.teminator
+            match: ";"
+      genericKeyword:
+        patterns:
+          - name: keyword.control
+            match: |
+              (?x)
+              if | then | else | elseif | elif |
+              begin | end |
+              for | foreach | while | loop |
+              using | with | try | catch | finally | defer | guard |
+              return | break | continue | throw | raise | await
+              switch | when | match | case
+          - name: keyword.declaration.variable
+            match: var|let|val|const|def
+          - name: storage.modifier
+            match: (?x)
+              public | private | protected | internal |
+              readonly | final | sealed | abstract |
+              mut | inline | async | throws | template | async
+      genericFloat:
+        name: constant.numeric.float
+        match: '[\+-]?\d*\.\d+(?:[eE][\+-]?\d+)?\w*'
+      genericInt:
+        name: constant.numeric
+        match: '[\+-]?\d\w*'
+
+        captures:
+          0:
+            patterns:
+              - name: constant.numeric.integer.binary
+                match: "0bw+"
+              - name: constant.numeric.integer.hexadecimal
+                match: "0xw+"
+              - name: constant.numeric.integer.octal
+                match: '0[o\d]\w*'
+              - name: constant.numeric.integer
+                match: '\d\w*'
+      genericString:
+        patterns:
+          - name: string.quoted.double
+            begin: '"'
+            end: '"'
+            patterns: &genericStringPatterns
+              - include: "#escape"
+          - name: string.quoted.single
+            begin: "'"
+            end: "'"
+            patterns: *genericStringPatterns
+          - name: string.quoted.other
+            begin: "`"
+            end: "`"
+            patterns: *genericStringPatterns
+    #/genericCode
+
+scopeName: text.html.mintyml

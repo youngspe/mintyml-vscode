@@ -1,0 +1,32 @@
+h1> MinTyML Example Page
+
+h2> Introduction
+This is an example page written in MinTyML to demonstrate its simplicity and power.
+
+h2> Features
+ol {
+  > Concise Syntax
+  > Easy to Learn
+  > Flexible
+}
+
+h2> Inline Formatting
+
+MinTyML supports <#strong#>, </emphasis/>, <_underline_>, <~strikethrough~>,
+<"quote">, and <`code`> formatting.
+
+h2> Inferred Element Types
+section {
+  This is a paragraph within a section.
+
+  Another paragraph.
+}
+
+h2> Headings and Subheadings
+h3> Why Use MinTyML?
+MinTyML simplifies the process of writing and maintaining web documents.
+
+h2> Comments
+
+MinTyML allows you to add comments to your code that won't be displayed in the final document.
+<! This is a comment that will not be rendered !>
