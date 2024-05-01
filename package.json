@@ -11,7 +11,7 @@
     "url": "https://github.com/youngspe/mintyml-vscode"
   },
   "icon": "mintyml-logo-icon.png",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "scripts": {
     "build": "node ./scripts/build.js"
   },
@@ -36,6 +36,10 @@
           ".mintyml"
         ],
         "configuration": "./language-configuration.json"
+        ,"icon": {
+          "dark": "mintyml-logo-icon.png",
+          "light": "mintyml-logo-icon.png"
+        }
       }
     ],
     "configurationDefaults": {
