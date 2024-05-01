@@ -2,6 +2,11 @@
   "name": "mintyml",
   "displayName": "MinTyML",
   "description": "MinTyML syntax highlighting",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/youngspe/mintyml-vscode"
+  },
+  "icon": "icon.png",
   "version": "0.1.0",
   "scripts": {
     "build": "node ./scripts/build.js"
