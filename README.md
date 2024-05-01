@@ -10,7 +10,7 @@ For more information, see the
 
 Provides syntax highlighting for MinTyML documents
 
-![Screenshot of a MinTyML document with syntax highlighting](examples/image/sample.png)
+![Screenshot of a MinTyML document with syntax highlighting](example/image/sample.png)
 
 ## Release Notes
 

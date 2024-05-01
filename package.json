@@ -1,13 +1,17 @@
 {
   "name": "mintyml",
+  "author": {
+    "name": "Spencer Young"
+  },
+  "publisher": "youngspe",
   "displayName": "MinTyML",
   "description": "MinTyML syntax highlighting",
   "repository": {
     "type": "git",
     "url": "https://github.com/youngspe/mintyml-vscode"
   },
-  "icon": "icon.png",
-  "version": "0.1.0",
+  "icon": "mintyml-logo-icon.png",
+  "version": "0.1.1",
   "scripts": {
     "build": "node ./scripts/build.js"
   },
@@ -17,6 +21,7 @@
   "categories": [
     "Programming Languages"
   ],
+  "license": "MIT",
   "contributes": {
     "languages": [
       {

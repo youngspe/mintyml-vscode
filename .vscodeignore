@@ -5,4 +5,6 @@ vsc-extension-quickstart.md
 *.tmLanguage.yaml
 scripts/**
 node_modules
-
+example/src
+*.vsix
+language-configuration.yaml
