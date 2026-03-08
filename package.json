@@ -20,7 +20,7 @@
     "format": "prettier -w ."
   },
   "engines": {
-    "vscode": "^1.87.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "Programming Languages"
@@ -79,6 +79,7 @@
   },
   "devDependencies": {
     "@types/vscode": "^1.109.0",
+    "@vscode/vsce": "^3.7.1",
     "js-yaml": "^4.1.0",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3"
