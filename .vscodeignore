@@ -8,3 +8,7 @@ node_modules
 example/src
 *.vsix
 language-configuration.yaml
+/src
+*.tsbuildinfo
+tsconfig*.json
+# *.map

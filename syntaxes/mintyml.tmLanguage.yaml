@@ -40,14 +40,14 @@ variables:
     \b (?= {{ selector }}* (?: \[ | \s* [>\{] ) )
 
 patterns:
-  - include: "#node"
+  - include: '#node'
 repository:
   node:
     name: meta.node.mintyml
     patterns:
-      - include: "#interpolate"
-      - include: "#element"
-      - include: "#paragraph"
+      - include: '#interpolate'
+      - include: '#element'
+      - include: '#paragraph'
 
   escape:
     name: constant.character.escape.mintyml
@@ -72,41 +72,41 @@ repository:
       4:
         patterns:
           - name: constant.numeric.integer.hexadecimal.mintyml
-            match: "[a-fA-F0-9]+"
+            match: '[a-fA-F0-9]+'
           - name: invalid.illegal
-            match: ".+"
+            match: '.+'
       5: { name: punctuation.definition.interpolation.end.mintyml }
       6: { name: constant.character.escape.ascii.mintyml }
       7:
         patterns:
           - name: constant.numeric.integer.hexadecimal.mintyml
-            match: "[0-7][a-fA-F0-9]"
+            match: '[0-7][a-fA-F0-9]'
           - name: invalid.illegal
-            match: ".+"
+            match: '.+'
       8: { name: invalid.illegal }
 
   <<:
     - element:
         patterns:
-          - include: "#rawBlock"
-          - include: "#line"
-          - include: "#block"
-          - include: "#specialTag"
-          - include: "#selector"
+          - include: '#rawBlock'
+          - include: '#line'
+          - include: '#block'
+          - include: '#specialTag'
+          - include: '#selector'
       line:
         begin: |-
           (?x)
           (?<! \\ | {{ inlineDelimiterClose }} ) >
-        end: "{{ endParagraph }}"
+        end: '{{ endParagraph }}'
         patterns:
-          - include: "#node"
+          - include: '#node'
         beginCaptures:
           0: { name: keyword.operator.combinator.mintyml }
         name: meta.line.mintyml
       block:
         name: meta.block.mintyml
-        begin: "{"
-        end: "}"
+        begin: '{'
+        end: '}'
         beginCaptures:
           0:
             name: punctuation.section.block.begin.mintyml
@@ -114,22 +114,22 @@ repository:
           0:
             name: punctuation.section.block.end.mintyml
         patterns:
-          - include: "#element"
-          - include: "#paragraph"
+          - include: '#element'
+          - include: '#paragraph'
       <<:
         - specialTag:
             patterns:
-              - include: "#anchor"
-              - include: "#specialBold"
-              - include: "#specialItalic"
-              - include: "#specialUnderline"
-              - include: "#specialStrike"
-              - include: "#specialQuote"
-              - include: "#specialIns"
-              - include: "#specialDel"
-              - include: "#specialUlist"
-              - include: "#specialOlist"
-              - include: "#heading"
+              - include: '#anchor'
+              - include: '#specialBold'
+              - include: '#specialItalic'
+              - include: '#specialUnderline'
+              - include: '#specialStrike'
+              - include: '#specialQuote'
+              - include: '#specialIns'
+              - include: '#specialDel'
+              - include: '#specialUlist'
+              - include: '#specialOlist'
+              - include: '#heading'
           anchor:
             contentName: markup.underline.link
             begin: |
@@ -137,9 +137,9 @@ repository:
             beginCaptures:
               0: { name: entity.name.tag.a.html.mintyml }
             <<: &specialTagMixin
-              end: "{{ endParagraph }}"
+              end: '{{ endParagraph }}'
               patterns:
-                - include: "#element"
+                - include: '#element'
           specialBold:
             contentName: markup.bold.mintyml
             begin: |
@@ -209,12 +209,12 @@ repository:
             - heading:
                 name: meta.heading.mintyml
                 patterns:
-                  - include: "#heading1"
-                  - include: "#heading2"
-                  - include: "#heading3"
-                  - include: "#heading4"
-                  - include: "#heading5"
-                  - include: "#heading6"
+                  - include: '#heading1'
+                  - include: '#heading2'
+                  - include: '#heading3'
+                  - include: '#heading4'
+                  - include: '#heading5'
+                  - include: '#heading6'
               heading1:
                 contentName: markup.heading.1.html.mintyml
                 begin: |
@@ -274,11 +274,11 @@ repository:
             end: |-
               (?=$|[\s<>{}\]])
             patterns:
-              - include: "#attributeList"
-              - include: "#wildcardSelector"
-              - include: "#classSelector"
-              - include: "#tagSelector"
-              - include: "#idSelector"
+              - include: '#attributeList'
+              - include: '#wildcardSelector'
+              - include: '#classSelector'
+              - include: '#tagSelector'
+              - include: '#idSelector'
 
           wildcardSelector:
             match: '\*'
@@ -315,7 +315,7 @@ repository:
             endCaptures:
               0: { name: punctuation.section.brackets.end.mintyml }
             patterns:
-              - include: "#attribute"
+              - include: '#attribute'
           attribute:
             name: meta.attribute.mintyml
             patterns:
@@ -342,15 +342,15 @@ repository:
                   5:
                     name: string.unquoted.mintyml
                     patterns:
-                      - include: "#escape"
+                      - include: '#escape'
                   6:
                     name: string.quoted.double.mintyml
                     patterns:
-                      - include: "#escape"
+                      - include: '#escape'
                   7:
                     name: string.quoted.single.mintyml
                     patterns:
-                      - include: "#escape"
+                      - include: '#escape'
         #/attributeList
     #/element
 
@@ -365,11 +365,11 @@ repository:
             (?: $ | {{ inlineDelimiterClose }} > | [^\\][\s\}<] )
           )
 
-        end: "{{ endParagraph }}"
+        end: '{{ endParagraph }}'
 
         patterns:
-          - include: "#escape"
-          - include: "#inline"
+          - include: '#escape'
+          - include: '#inline'
           - name: invalid.illegal.mintyml
             match: |-
               (?x)
@@ -378,14 +378,14 @@ repository:
       <<:
         - inline:
             patterns:
-              - include: "#inlineElement"
-              - include: "#inlineStrong"
-              - include: "#inlineEmphasis"
-              - include: "#inlineStrike"
-              - include: "#inlineQuote"
-              - include: "#inlineUnderline"
-              - include: "#inlineComment"
-              - include: "#inlineRaw"
+              - include: '#inlineElement'
+              - include: '#inlineStrong'
+              - include: '#inlineEmphasis'
+              - include: '#inlineStrike'
+              - include: '#inlineQuote'
+              - include: '#inlineUnderline'
+              - include: '#inlineComment'
+              - include: '#inlineRaw'
 
           <<:
             - inlineElement:
@@ -394,7 +394,7 @@ repository:
                 <<: &inlineMixin
                   name: meta.inline.mintyml
                   patterns:
-                    - include: "#node"
+                    - include: '#node'
                   <<: &genericBraceCaptures
                     beginCaptures:
                       0: { name: punctuation.definition.generic.begin.mintyml }
@@ -402,20 +402,20 @@ repository:
                       0: { name: punctuation.definition.generic.end.mintyml }
 
               inlineStrong:
-                begin: "<#"
-                end: "#>"
+                begin: '<#'
+                end: '#>'
                 <<: *inlineMixin
                 contentName: markup.bold.mintyml
 
               inlineEmphasis:
-                begin: "</"
-                end: "/>"
+                begin: '</'
+                end: '/>'
                 <<: *inlineMixin
                 contentName: markup.italic.mintyml
 
               inlineStrike:
-                begin: "<~"
-                end: "~>"
+                begin: '<~'
+                end: '~>'
                 <<: *inlineMixin
                 contentName: markup.strikethrough.mintyml
 
@@ -426,21 +426,21 @@ repository:
                 contentName: markup.quote.mintyml
 
               inlineUnderline:
-                begin: "<_"
-                end: "_>"
+                begin: '<_'
+                end: '_>'
                 <<: *inlineMixin
                 contentName: markup.underline.mintyml
             #/inlineElement
             - inlineRaw:
                 name: meta.raw.inline.mintyml
                 patterns:
-                  - include: "#inlineCode"
-                  - include: "#inlineRaw0"
-                  - include: "#inlineRaw1"
-                  - include: "#inlineRaw2"
+                  - include: '#inlineCode'
+                  - include: '#inlineRaw0'
+                  - include: '#inlineRaw1'
+                  - include: '#inlineRaw2'
               inlineCode:
-                begin: "<`"
-                end: "`>"
+                begin: '<`'
+                end: '`>'
                 <<: &inlineRawMixin
                   contentName: string.other.raw.inline.mintyml
                   <<: *genericBraceCaptures
@@ -458,8 +458,8 @@ repository:
                 <<: *inlineRawMixin
             #/inlineRaw
             - inlineComment:
-                begin: "<!"
-                end: "!>"
+                begin: '<!'
+                end: '!>'
                 name: meta.comment.block.mintyml
                 contentName: comment.block.mintyml
                 beginCaptures:
@@ -467,16 +467,16 @@ repository:
                 endCaptures:
                   0: { name: punctuation.definition.comment.end.mintyml }
                 patterns:
-                  - include: "#inlineComment"
+                  - include: '#inlineComment'
             #/inlineComment
         #/inline
     #/paragraph
 
     - rawBlock:
         patterns:
-          - include: "#rawBlockSingle"
-          - include: "#rawBlockDouble"
-          - include: "#codeBlock"
+          - include: '#rawBlockSingle'
+          - include: '#rawBlockDouble'
+          - include: '#codeBlock'
 
       rawBlockSingle: &rawBlock
         begin: |
@@ -493,7 +493,7 @@ repository:
           1: { name: punctuation.definition.string.begin.mintyml }
           2:
             patterns:
-              - include: "#attribute"
+              - include: '#attribute'
         endCaptures:
           1: { name: punctuation.definition.string.end.mintyml }
 
@@ -508,7 +508,7 @@ repository:
           (?xm)
           (""")\s*$
         patterns:
-          - include: "#escape"
+          - include: '#escape'
 
       codeBlock:
         begin: |
@@ -525,7 +525,7 @@ repository:
           1: { name: punctuation.definition.raw.begin.mintyml }
           2:
             patterns:
-              - include: "#attribute"
+              - include: '#attribute'
         endCaptures:
           1: { name: punctuation.definition.raw.end.mintyml }
     #/rawBlock
@@ -533,10 +533,10 @@ repository:
     - interpolate:
         name: meta.interpolation.mintyml
         patterns:
-          - include: "#angleModInterpolate"
-          - include: "#angleQmarkInterpolate"
-          - include: "#braceModInterpolate"
-          - include: "#doubleBraceInterpolate"
+          - include: '#angleModInterpolate'
+          - include: '#angleQmarkInterpolate'
+          - include: '#braceModInterpolate'
+          - include: '#doubleBraceInterpolate'
 
       angleModInterpolate:
         name: meta.interpolation.mintyml

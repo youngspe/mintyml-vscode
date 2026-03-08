@@ -1,0 +1,19 @@
+"$schema" = "https://json.schemastore.org/prettierrc.json"
+
+singleQuote = true
+semi = true
+objectWrap = "collapse"
+arrowParens = "avoid"
+printWidth = 108
+experimentalTernaries = true
+experimentalOperatorPosition = "start"
+trailingComma = "all"
+
+[[overrides]]
+files = "tsconfig*.json"
+options.parser = "jsonc"
+
+[[overrides]]
+files = "*.json"
+options.printWidth = 96
+options.objectWrap = "preserve"

@@ -10,10 +10,14 @@
     "type": "git",
     "url": "https://github.com/youngspe/mintyml-vscode"
   },
+  "main": "./dist/extension.js",
+  "type": "module",
   "icon": "mintyml-logo-icon.png",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "scripts": {
-    "build": "node ./scripts/build.js"
+    "build": "tsc -b && node ./scripts/build.js",
+    "vscode:prepublish": "npm run build",
+    "format": "prettier -w ."
   },
   "engines": {
     "vscode": "^1.87.0"
@@ -35,8 +39,8 @@
           ".mty",
           ".mintyml"
         ],
-        "configuration": "./language-configuration.json"
-        ,"icon": {
+        "configuration": "./language-configuration.json",
+        "icon": {
           "dark": "mintyml-logo-icon.png",
           "light": "mintyml-logo-icon.png"
         }
@@ -54,9 +58,32 @@
         "scopeName": "text.html.mintyml",
         "path": "./syntaxes/mintyml.tmLanguage.json"
       }
-    ]
+    ],
+    "commands": [
+      {
+        "command": "mintyml.openPreview",
+        "title": "Preview MinTyML",
+        "icon": "$(open-preview)",
+        "when": "resourceLangId == mintyml"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "mintyml.openPreview",
+          "group": "navigation",
+          "when": "resourceLangId == mintyml"
+        }
+      ]
+    }
   },
   "devDependencies": {
-    "js-yaml": "^4.1.0"
+    "@types/vscode": "^1.109.0",
+    "js-yaml": "^4.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "mintyml": "^0.1.19"
   }
 }

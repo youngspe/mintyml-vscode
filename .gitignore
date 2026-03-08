@@ -1,3 +1,5 @@
 node_modules
 language-configuration.json
 *.vsix
+*.tsbuildinfo
+dist/
