@@ -13,7 +13,7 @@
   "main": "./dist/extension.js",
   "type": "module",
   "icon": "mintyml-logo-icon.png",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "scripts": {
     "build": "tsc -b && node ./scripts/build.js",
     "vscode:prepublish": "npm run build",

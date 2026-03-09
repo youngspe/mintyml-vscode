@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { MintymlConverter } from 'mintyml';
+import { StringByteOffsetIndex } from './textUtil.js';
 
 interface DisposableLike {
   dispose(): unknown;
@@ -22,9 +23,7 @@ class Subs {
   }
 
   subtract(value: DisposableLike | null | undefined) {
-    if (!value) return this;
-
-    if (!this.#refCounts) return this;
+    if (!value || !this.#refCounts) return this;
 
     const count = this.#refCounts.get(value);
     if (count === undefined) return this;
@@ -42,8 +41,8 @@ class Subs {
     if (value) this.#refCounts?.delete(value);
   }
 
-  disposeOf(value: DisposableLike) {
-    if (!this.#refCounts) return this;
+  disposeOf(value: DisposableLike | null | undefined) {
+    if (!value || !this.#refCounts) return this;
 
     if (this.#refCounts.delete(value)) {
       value.dispose();
@@ -75,9 +74,9 @@ class Throttler<T = void> {
   #cancel: ((_?: undefined) => void) | undefined;
   #action;
 
-  constructor(action: () => T | PromiseLike<T>, options: { debounceMs?: number } = {}) {
+  constructor(action: () => T | PromiseLike<T>, options: { delayMs?: number } = {}) {
     this.#action = action;
-    this.delayMs = options.debounceMs ?? 0;
+    this.delayMs = options.delayMs ?? 0;
   }
 
   async #loop() {
@@ -153,30 +152,48 @@ class Throttler<T = void> {
   }
 }
 
+const STANDARD_DEBOUNCE_MS = 2000;
+const PREVIEW_DEBOUNCE_MS = 500;
+
 export function activate(context: vscode.ExtensionContext) {
   const subs = new Subs();
   context.subscriptions.push(subs);
   const mintymlConverter = new MintymlConverter({ completePage: true });
+  const dx = vscode.languages.createDiagnosticCollection('MinTyML');
 
   let previewPanel: vscode.WebviewPanel | undefined;
   let _doc: vscode.TextDocument | undefined;
 
+  const docUpdaters = new Map<string, Throttler>();
+
   let webViewSubs: Subs | undefined;
 
-  const updateHtml = new Throttler(
-    async () => {
-      if (!previewPanel || !_doc) return;
+  // const updateHtml = new Throttler(
+  //   async () => {
+  //     if (!previewPanel || !_doc) return;
 
-      const previewHtml = await mintymlConverter.convertForgiving(_doc.getText());
-      previewPanel.webview.html = previewHtml.output ?? '';
-    },
-    { debounceMs: 500 },
-  );
+  //     const previewHtml = await mintymlConverter.convertForgiving(_doc.getText());
+  //     previewPanel.webview.html = previewHtml.output ?? '';
+  //   },
+  //   { delayMs: 500 },
+  // );
 
   async function setWebView(doc: vscode.TextDocument) {
     webViewSubs ??= subs.add(new Subs());
 
+    const oldThrottler = _doc && docUpdaters.get(_doc.uri.toString());
+    if (oldThrottler) {
+      oldThrottler.delayMs = STANDARD_DEBOUNCE_MS;
+    }
+
     _doc = doc;
+
+    const newThrottler = docUpdaters.get(doc.uri.toString());
+
+    if (newThrottler) {
+      newThrottler.delayMs = PREVIEW_DEBOUNCE_MS;
+    }
+
     const title = `Preview ${doc.uri.path.replace(/^.+\/(?!$)/, '')}`;
     if (previewPanel) {
       previewPanel.title = title;
@@ -194,34 +211,24 @@ export function activate(context: vscode.ExtensionContext) {
       webViewSubs.add(
         previewPanel.onDidChangeViewState(state => {
           if (state.webviewPanel.visible) {
-            updateHtml.resume();
-          } else {
-            updateHtml.pause();
+            docUpdaters.get(doc.uri.toString())?.update();
           }
         }),
       );
 
       previewPanel.onDidDispose(() => {
         webViewSubs?.delete(previewPanel);
-        webViewSubs?.dispose();
+        subs.disposeOf(webViewSubs);
         webViewSubs = undefined;
         previewPanel = undefined;
         _doc = undefined;
       });
-
-      webViewSubs.add(
-        vscode.workspace.onDidChangeTextDocument(({ document }) => {
-          if (_doc?.uri === document.uri) {
-            updateHtml.update();
-          }
-        }),
-      );
     }
 
-    await updateHtml.update();
+    await newThrottler?.update();
   }
 
-  context.subscriptions.push(
+  subs.add(
     vscode.commands.registerCommand(
       'mintyml.openPreview',
       async ({ external: uri }: { external?: string } = {}) => {
@@ -244,4 +251,92 @@ export function activate(context: vscode.ExtensionContext) {
       },
     ),
   );
+
+  let onDocChange: DisposableLike | undefined;
+
+  const addDoc = async (doc: vscode.TextDocument) => {
+    if (doc.languageId !== 'mintyml') return;
+
+    const uri = doc.uri.toString();
+    if (docUpdaters.has(uri)) return;
+
+    const byteOffsetIndex = new StringByteOffsetIndex(doc);
+
+    const throttler = new Throttler(
+      async () => {
+        const result = await mintymlConverter.convertForgiving(doc.getText());
+
+        if (result.output && previewPanel?.visible && _doc?.uri.toString() === uri) {
+          previewPanel.webview.html = result.output;
+        }
+
+        const errors = result.error?.syntaxErrors ?? [];
+
+        dx.set(
+          doc.uri,
+          errors.map(
+            e =>
+              new vscode.Diagnostic(
+                new vscode.Range(
+                  byteOffsetIndex.getPositionAtByteOffset(e.start),
+                  byteOffsetIndex.getPositionAtByteOffset(e.end),
+                ),
+                e.message,
+                vscode.DiagnosticSeverity.Error,
+              ),
+          ),
+        );
+      },
+      { delayMs: STANDARD_DEBOUNCE_MS },
+    );
+    docUpdaters.set(uri, throttler);
+
+    if (docUpdaters.size === 1 && !onDocChange) {
+      onDocChange = subs.add(
+        vscode.workspace.onDidChangeTextDocument(async e => {
+          const uri = e.document.uri.toString();
+
+          const updater = docUpdaters.get(uri);
+
+          if (updater && doc.languageId !== 'mintyml') {
+            removeDoc(doc);
+          } else if (updater) {
+            await updater.update();
+          } else {
+            await addDoc(doc);
+          }
+        }),
+      );
+    }
+
+    await throttler.update();
+  };
+
+  const removeDoc = (doc: vscode.TextDocument) => {
+    const uri = doc.uri.toString();
+
+    if (docUpdaters.delete(uri) && docUpdaters.size === 0 && onDocChange) {
+      subs.disposeOf(onDocChange);
+      onDocChange = undefined;
+    }
+  };
+
+  subs.add(vscode.workspace.onDidOpenTextDocument(addDoc));
+  subs.add(
+    vscode.window.onDidChangeVisibleTextEditors(e => {
+      for (const editor of e) {
+        if (editor.document) {
+          addDoc(editor.document);
+        }
+      }
+    }),
+  );
+
+  subs.add(vscode.workspace.onDidCloseTextDocument(removeDoc));
+
+  for (const editor of vscode.window.visibleTextEditors) {
+    if (editor.document) {
+      addDoc(editor.document);
+    }
+  }
 }
